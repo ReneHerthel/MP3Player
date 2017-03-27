@@ -1,0 +1,105 @@
+#-----------------------------------
+#----------------FSMC---------------
+#-----------------------------------
+NET NWE					LOC = "K12";
+NET NE					LOC = "L16";
+NET NOE					LOC = "H16";
+NET RDY					LOC = "M14";
+
+NET DATA(0) 			LOC = "N17";
+NET DATA(1) 			LOC = "P17";
+NET DATA(2) 			LOC = "L15";
+NET DATA(3) 			LOC = "K13";
+NET DATA(4) 			LOC = "F18";
+NET DATA(5) 			LOC = "F17";
+NET DATA(6) 			LOC = "F16";
+NET DATA(7) 			LOC = "G18";
+NET DATA(8) 			LOC = "F15";
+NET DATA(9) 			LOC = "H18";
+NET DATA(10)			LOC = "H17";
+NET DATA(11)			LOC = "J16";
+NET DATA(12)			LOC = "J18";
+NET DATA(13)			LOC = "L18";
+NET DATA(14)			LOC = "K17";
+NET DATA(15)			LOC = "N18";
+
+#-----------------------------------
+#---------------INPUT---------------
+#-----------------------------------
+
+#----------------CLK----------------
+NET CLK					LOC = "V10";
+
+#--------------BUTTONS--------------
+#NET S1					LOC = "B16";
+#NET S2					LOC = "A16";
+#NET S3					LOC = "C15";
+#NET S4					LOC = "A15";
+#NET S5					LOC = "B14";
+#NET S6					LOC = "A14";
+#NET S7					LOC = "D14";
+#NET S8					LOC = "C14";
+
+#-----------------------------------
+#---------------OUTPUT--------------
+#-----------------------------------
+
+#---------------ANODES--------------
+NET ANODES(0)			LOC = "V9";
+NET ANODES(1)			LOC = "T9";
+NET ANODES(2)			LOC = "T10";
+NET ANODES(3)			LOC = "R10";
+
+#--------------CATHODES-------------
+NET CATHODES(7)			LOC = "T11";	#dp
+NET CATHODES(6)			LOC = "R11";	#g
+NET CATHODES(5)			LOC = "V11";	#f
+NET CATHODES(4)			LOC = "U11";	#e
+NET CATHODES(3)			LOC = "V13";	#d
+NET CATHODES(2)			LOC = "U13";	#c
+NET CATHODES(1)			LOC = "V14";	#b
+NET CATHODES(0)			LOC = "T14";	#a
+
+#----------------LEDs---------------
+#NET LED0				LOC = "F13";
+NET NE_OUT				LOC = "F13";
+#NET LED1				LOC = "E13";
+NET NWE_OUT				LOC = "E13";
+#NET LED2				LOC = "B12";
+NET NOE_OUT				LOC = "B12";
+#NET LED3				LOC = "A12";
+NET RDY_OUT				LOC = "A12";
+#NET LED4				LOC = "B11";
+#NET LED5				LOC = "A11";
+#NET LED6				LOC = "D11";
+#NET LED7				LOC = "C11";
+
+#----------------PMOD1--------------
+#NET P1-1				LOC = "C10";
+#NET P1-2				LOC = "A10";
+#NET P1-3				LOC = "B9";
+#NET P1-4				LOC = "A9";
+#NET P1-7				LOC = "D9";
+#NET P1-8				LOC = "C9";
+#NET P1-9				LOC = "D8";
+#NET P1-10				LOC = "C8";
+
+#----------------PMOD2--------------
+#NET P2-1				LOC = "B8";
+#NET P2-2				LOC = "A8";
+#NET P2-3				LOC = "G9";
+#NET P2-4				LOC = "F9";
+#NET P2-7				LOC = "C7";
+#NET P2-8				LOC = "A7";
+#NET P2-9				LOC = "B6";
+#NET P2-10				LOC = "A6";
+
+#----------------PMOD3--------------
+#NET P3-1				LOC = "D6";
+#NET P3-2				LOC = "C6";
+#NET P3-3				LOC = "C5";
+#NET P3-4				LOC = "A5";
+#NET P3-7				LOC = "B4";
+#NET P3-8				LOC = "A4";
+#NET P3-9				LOC = "B3";
+#NET P3-10				LOC = "A3";
