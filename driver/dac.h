@@ -18,7 +18,7 @@
  */
 typedef enum {
 #if DAC_0_EN
-	  DAC_0 = 0,  /**< DAC device 0 */
+    DAC_0 = 0,  /**< DAC device 0 */
 #endif
 } dac_t;
 

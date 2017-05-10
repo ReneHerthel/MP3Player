@@ -8,7 +8,7 @@
 #define DEBUG_H
 
 /** Set to 0 to disable Debug messages */
-#define MSG_EN     (1)
+#define MSG_EN     (0)
 
 /**
  * @brief Defined debug message, prints if debug is enabled via makefile
