@@ -23,7 +23,8 @@ int spi_init_master(spi_t dev, spi_baud_t baud)
 {
     SPI_TypeDef *spi;
 
-    switch (dev) {
+    switch (dev)
+    {
 #if SPI_0_EN
         case SPI_0:
             spi = SPI_0_DEV;
@@ -37,7 +38,8 @@ int spi_init_master(spi_t dev, spi_baud_t baud)
             return -1;
     }
 
-    if (spi_conf_pins(dev)) {
+    if (spi_conf_pins(dev))
+    {
         return -1;
     }
 
@@ -59,10 +61,11 @@ int spi_init_master(spi_t dev, spi_baud_t baud)
 
 int spi_conf_pins(spi_t dev)
 {
-	  GPIO_TypeDef *port[3];
-	  int hl, i, pin[3], af[3];
+    GPIO_TypeDef *port[3];
+    int hl, i, pin[3], af[3];
 
-    switch (dev) {
+    switch (dev)
+    {
 #if SPI_0_EN
         case SPI_0:
             port[0] = SPI_0_SCK_PORT;
@@ -76,11 +79,12 @@ int spi_conf_pins(spi_t dev)
             af[2] = SPI_0_MISO_AF;
             break;
 #endif /* SPI_0_EN */
-				default:
-					  return 1;
-		}
+        default:
+            return 1;
+    }
 
-    for (i = 0; i < 3; i++) {
+    for (i = 0; i < 3; i++)
+    {
         /* Set GPIOs to AF mode */
         port[i]->MODER &= ~(3 << (2 * pin[i]));
         port[i]->MODER |= (GPIO_MODE_AF << (2 * pin[i]));
@@ -101,11 +105,13 @@ int spi_conf_pins(spi_t dev)
     return 0;
 }
 
-int spi_acquire(spi_t dev){
+int spi_acquire(spi_t dev)
+{
     return -1;
 }
 
-int spi_release(spi_t dev){
+int spi_release(spi_t dev)
+{
     return -1;
 }
 
@@ -114,7 +120,8 @@ void spi_transfer_byte(spi_t dev, unsigned char out, unsigned char *in)
     char val;
     SPI_TypeDef *spi;
 
-    switch (dev) {
+    switch (dev)
+    {
 #if SPI_0_EN
         case SPI_0:
         spi = SPI_0_DEV;
@@ -122,22 +129,31 @@ void spi_transfer_byte(spi_t dev, unsigned char out, unsigned char *in)
     }
 
     /* wait for an eventually previous byte to be finished transferred */
-    while(!(spi->SR & SPI_SR_TXE)){};
+    while(!(spi->SR & SPI_SR_TXE))
+    {
+        /* Do nothing here. */
+    };
+
     /* put next byte into the output register */
     spi->DR = (char) out;
+
     /* wait until the current byte was successfully transferred */
     while(!(spi->SR & SPI_SR_RXNE)){};
+
     /* read response byte to reset flags */
     val = spi->DR;
+
     /* 'return' response byte if wished for */
-    if (in != NULL) { // if (in) {*in=val;}
+    if (in != NULL)
+    {
         *in = (unsigned char) val;
     }
 }
 
 void spi_poweron(spi_t dev)
 {
-    switch (dev) {
+    switch (dev)
+    {
 #if SPI_0_EN
         case SPI_0:
             while (SPI_0_DEV->SR & SPI_SR_BSY);
@@ -149,7 +165,8 @@ void spi_poweron(spi_t dev)
 
 void spi_poweroff(spi_t dev)
 {
-    switch (dev) {
+    switch (dev)
+    {
 #if SPI_0_EN
         case SPI_0:
             while (SPI_0_DEV->SR & SPI_SR_BSY);

@@ -7,20 +7,23 @@
  *
  * @}
  */
- 
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stm32f4xx.h>
 #include <string.h>
+
 /** HAW-TI-LAB libraries */
 #include "CE_Lib.h"
 #include "tft.h"
+
 /** Application helper */
 #define ARM_ADS
 #include "include/mp3dec.h"
 #include "include/audiocalc.h"
 #include "include/periph_access.h"
 #include "include/fsmc.h"
+
 /** Low-level peripheral driver */
 #include "driver/pwm.h"
 #include "driver/dac.h"
@@ -28,10 +31,13 @@
 #include "driver/gpio.h"
 #include "driver/at25df641.h"
 #include "driver/spi.h"
+
 /** Commando macros for memory */
 #include "driver/define/at25df641_def.h"
+
 /** Configuration of all peripherie */
 #include "driver/config/periph_conf.h"
+
 /** Application macros */
 #define TFT_EN          (1)
 #define MSEC_DIVIDER    (SYS_FREQ / 1000)
@@ -39,21 +45,18 @@
 #define LEFT_CHANNEL    (0)
 #define RIGHT_CHANNEL   (1)
 #define OUTPUT_AMP			(181) // amplification of the signal to reach original scale, sqrt(32768) = 181
+
 /** Fifo declarations */
 typedef struct {
     int16_t data[FIFO_BUFF_SIZE]; /**< data of fifo */
     uint16_t index;               /**< Current index of the buffer */
     uint8_t full;                 /**< Flag if buffer is full */
 } fifo_t;
+
 static volatile fifo_t fifo_0;    /**< first buffer */
 static volatile fifo_t fifo_1;    /**< second buffer */
 static volatile fifo_t *bg_buf;   /**< pointer to bgBuffer */
 static volatile fifo_t *isr_buf;  /**< pointer to isrBuffer */
-
-//static volatile fifo_t fifo_0_v;    /**< first buffer */
-//static volatile fifo_t fifo_1_v;    /**< second buffer */
-//static volatile fifo_t *bg_buf_v;   /**< pointer to bgBuffer */
-//static volatile fifo_t *isr_buf_v;  /**< pointer to isrBuffer */
 
 /** Misc */
 static volatile int tft_refresh;  /**< flag to refresh the display */
@@ -66,12 +69,11 @@ static int forever = 0;
  *****************************************************************************/
 static void _reset_var(void)
 {
-	  forever = 1;
-	  address = 0;
-	  tft_refresh = 0;
-	  counter = 0;
+    forever = 1;
+    address = 0;
+    tft_refresh = 0;
+    counter = 0;
 }
-
 
 /*****************************************************************************
  * @brief Prints runtime informations to the tft-display.                    *
@@ -104,22 +106,22 @@ static void _lcd_out()
  *         When S1 is pressed, reset the data address to 0x000000 and start. *
  *         When S2 is pressed, Set the data address to 0x200000 and start.   *
  *****************************************************************************/
-static void _check_buttons(unsigned char *mem_data) {
-    if (S1) {
-			  _reset_var();
+static void _check_buttons(unsigned char *mem_data)
+{
+    if (S1)
+    {
+        _reset_var();
         address = 0x000000;
         at25df641_read(AT25DF641_1, mem_data, MAINBUF_SIZE, address);
         address += MAINBUF_SIZE;
-        printf("\n\n----------------------------\n");
-        printf("S1 -> Play from: 0x%x\n", address);
     }
-    if (S2) {
-			  _reset_var();
+
+    if (S2)
+    {
+        _reset_var();
         address = 0x200000;
         at25df641_read(AT25DF641_1, mem_data, MAINBUF_SIZE, address);
         address += MAINBUF_SIZE;
-        printf("\n\n----------------------------\n");
-        printf("S2 -> Play from: 0x%x\n", address);
     }
 }
 
@@ -128,8 +130,7 @@ static void _check_buttons(unsigned char *mem_data) {
  *                                                                           *
  * @detail TODO                                                              *
  *****************************************************************************/
-static void _update_memory(unsigned char *data, unsigned char *data_ptr, 
-                        int bytes_left)
+static void _update_memory(unsigned char *data, unsigned char *data_ptr, int bytes_left)
 {
     memcpy(data, data_ptr, bytes_left);
     at25df641_read(AT25DF641_1, &data[bytes_left], MAINBUF_SIZE - bytes_left, address);
@@ -146,17 +147,17 @@ static void _update_memory(unsigned char *data, unsigned char *data_ptr,
  *****************************************************************************/
 static inline void _fsmc(void)
 {
-		int i;
-		int16_t tmp;
+    int i;
+    int16_t tmp;
 
-		for (i = 0; i < FIFO_BUFF_SIZE; i++) {
-				/* write to FPGA via FSMC */
-				fsmc_transfer(bg_buf->data[i], NULL);
-				/* read from FPGA via FSMC */
-				fsmc_transfer(NULL, &tmp);
-				bg_buf->data[i] = tmp * OUTPUT_AMP;
-				//DMSG("tmp: %d\n", tmp);
-		}
+    for (i = 0; i < FIFO_BUFF_SIZE; i++)
+    {
+        /* write to FPGA via FSMC */
+        fsmc_transfer(bg_buf->data[i], NULL);
+        /* read from FPGA via FSMC */
+        fsmc_transfer(NULL, &tmp);
+        bg_buf->data[i] = tmp * OUTPUT_AMP;
+    }
 }
 
 /*****************************************************************************
@@ -185,53 +186,43 @@ static void isr (void)
     uint16_t dac_right;
     uint16_t pwm_left;
     uint16_t pwm_right;
-	
-    if (!isr_buf->full /*&& !isr_buf_v->full*/) {
+
+    if (!isr_buf->full)
+    {
         SET_PH11();
     }
-    else {
+    else
+    {
         CLR_PH11();
-			
+
         dac_left = calc_dac(isr_buf->data[isr_buf->index]);
         dac_right = calc_dac(isr_buf->data[isr_buf->index + 1]);
         pwm_left = calc_pwm(isr_buf->data[isr_buf->index]);
         pwm_right = calc_pwm(isr_buf->data[isr_buf->index + 1]);
-			
-				//dac_right = calc_dac(isr_buf_v->data[isr_buf_v->index + 1]);
-				//pwm_right = calc_pwm(isr_buf_v->data[isr_buf_v->index + 1]);
-			
+
         dac_write(DAC_0, LEFT_CHANNEL, dac_left);
         dac_write(DAC_0, RIGHT_CHANNEL, dac_right);
         pwm_set(PWM_0, LEFT_CHANNEL, pwm_left);
         pwm_set(PWM_0, RIGHT_CHANNEL, pwm_right);
-			
+
         isr_buf->index += 2;
-				//isr_buf_v->index += 2;
         counter += 4;
-			
-        if (isr_buf->index >= FIFO_BUFF_SIZE) {
-					  isr_buf->index = 0;
+
+        if (isr_buf->index >= FIFO_BUFF_SIZE)
+        {
+            isr_buf->index = 0;
             isr_buf->full = 0;
-					
-						//isr_buf_v->index = 0;
-            //isr_buf_v->full = 0;
-					
-            if (isr_buf == &fifo_0) {
+
+            if (isr_buf == &fifo_0)
+            {
                 isr_buf = &fifo_1;
             }
-            else {
+            else
+            {
                 isr_buf = &fifo_0;
             }
-						/*
-						if (isr_buf_v == &fifo_0_v) {
-								isr_buf_v = &fifo_1_v;
-            }
-            else {
-								isr_buf_v = &fifo_0_v;
-            }
-						*/
         }
-    }
+    } /* else */
 }
 
 /*****************************************************************************
@@ -240,8 +231,8 @@ static void isr (void)
  * @detail Sets a flag, which signals that the display should be refreshed   *
  *****************************************************************************/
 static void tft (void)
-{    
-	  tft_refresh = 1;    
+{
+    tft_refresh = 1;
 }
 
 /*****************************************************************************
@@ -257,30 +248,21 @@ int main(void)
     int	status;
     unsigned char mem_data[MAINBUF_SIZE];
     unsigned char *mem_data_ptr = mem_data;
-	
-	  /* Need to initialize the CEP-TI-LAB-BOARD */
+
+    /* Need to initialize the CEP-TI-LAB-BOARD */
     initCEP_Board();
-    printf("\n\n----------------------------\n");
     _reset_var();
-	
+
     /* Initialize both buffer */
     fifo_0.full = 0;
     fifo_0.index = 0;
     fifo_1.full = 0;
     fifo_1.index = 0;
-	  /*
-		fifo_0_v.full = 0;
-    fifo_0_v.index = 0;
-    fifo_1_v.full = 0;
-    fifo_1_v.index = 0;
-	  */
-	  /* Set both pointer to first buffer */
+
+    /* Set both pointer to first buffer */
     bg_buf = &fifo_0;
     isr_buf = &fifo_0;
-		/*
-		bg_buf_v = &fifo_0_v;
-    isr_buf_v = &fifo_0_v;
-		*/
+
     /* Enable all needed GPIO clocks */
     GPIOA_CLKEN();
     GPIOC_CLKEN();
@@ -289,31 +271,32 @@ int main(void)
     GPIOI_CLKEN();
     WORK_CS_PORT_CLKEN();
     ORIG_CS_PORT_CLKEN();
-		
+
     /* Initialize all needed peripheral low-level drivers */
-    //fsmc_init();                            /**< FSMC interface */
-		timer_init(TIMER_0, isr);               /**< PWM Output timer */
-    timer_init(TIMER_1, tft);               /**< TFT Output timer */
-    dac_init(DAC_0);                        /**< DAC (PA4) Analog Output */
+    fsmc_init();                                  /**< FSMC interface */
+    timer_init(TIMER_0, isr);                     /**< PWM Output timer */
+    timer_init(TIMER_1, tft);                     /**< TFT Output timer */
+    dac_init(DAC_0);                              /**< DAC (PA4) Analog Output */
     spi_init_master(SPI_0, SPI_BAUD_42MHZ_DIV_2); /**< SPI3 with 21 MHz */
-    at25df641_init(AT25DF641_1);            /**< init work memory */
-    gpio_init(GPIO_DIR_OUT, GPIOI, PI7);    /**< D23 */
-    gpio_init(GPIO_DIR_OUT, GPIOH, PH11);   /**< Underflow-LED */
-    gpio_init(GPIO_DIR_OUT, GPIOI, PI6);    /**< D22 */
-    gpio_init(GPIO_DIR_OUT, GPIOH, PH13);   /**< Wait-LED */
-		
+    at25df641_init(AT25DF641_1);                  /**< init work memory */
+    gpio_init(GPIO_DIR_OUT, GPIOI, PI7);          /**< D23 */
+    gpio_init(GPIO_DIR_OUT, GPIOH, PH11);         /**< Underflow-LED */
+    gpio_init(GPIO_DIR_OUT, GPIOI, PI6);          /**< D22 */
+    gpio_init(GPIO_DIR_OUT, GPIOH, PH13);         /**< Wait-LED */
+
     /* Fills the memory buffer for the first time */
     at25df641_read(AT25DF641_1, mem_data, MAINBUF_SIZE, address);
     address += MAINBUF_SIZE;
-		
+
     /* Initialize a new mp3 decoder */
     if ((mp3Decoder = MP3InitDecoder()) == 0) {
         perror("MP3InitDecoder() [ FAIL ]\n");
         return 1;
     }
-		
+
     /* Main loop */
-    while (1) {
+    while (1)
+    {
         /*********************************************************************
          * @detail MP3 Play loop.                                            *
          *         1. Find the next word of the track                        *
@@ -327,62 +310,59 @@ int main(void)
          *         8. Clean up the memory                                    *
          *         9. [Optional] check buttons when playing                  *
          *********************************************************************/
-        while(forever) {
+        while (forever)
+        {
 #if TFT_EN
-            if (tft_refresh) {
+            if (tft_refresh)
+            {
                 _lcd_out();
                 tft_refresh = 0;
             }
 #endif
             bytes_left = MAINBUF_SIZE;
             mem_data_ptr = mem_data;
-						
-            if ((skip_bytes = MP3FindSyncWord(mem_data, MAINBUF_SIZE)) > 0) {
+
+            if ((skip_bytes = MP3FindSyncWord(mem_data, MAINBUF_SIZE)) > 0)
+            {
                 printf("Bytes skipped: %d\n", skip_bytes);
                 address += skip_bytes;
                 _update_memory(mem_data, mem_data_ptr, skip_bytes);
-            } 
-						else if (skip_bytes < 0) {
+            }
+            else if (skip_bytes < 0)
+            {
                 printf("MP3FindSyncWord() [ FAIL ]\n");
                 forever = 0;
                 break;
             }
-						
+
             SET_PH13();
             while(bg_buf->full);
             CLR_PH13();
-						
-            if ((status = MP3Decode(mp3Decoder, &mem_data_ptr, &bytes_left, (short *)bg_buf->data, 0)) < 0) {
+
+            if ((status = MP3Decode(mp3Decoder, &mem_data_ptr, &bytes_left, (short *)bg_buf->data, 0)) < 0)
+            {
                 printf("MP3Decode() [ ERROR %d ]\n", status);
                 forever = 0;
                 break;
             }
-						
-						//memcpy((fifo_t*) bg_buf_v, (fifo_t*) bg_buf, sizeof(fifo_t));
-																		
-						//_fsmc();
-						
-            bg_buf->full = 1;					
+
+            _fsmc();
+
+            bg_buf->full = 1;
+
             if (bg_buf == &fifo_0) {
                 bg_buf = &fifo_1;
             }
             else {
                 bg_buf = &fifo_0;
             }
-						/*
-						bg_buf_v->full = 1;					
-            if (bg_buf_v == &fifo_0_v) {
-                bg_buf_v = &fifo_1_v;
-            }
-            else {
-                bg_buf_v = &fifo_0_v;
-            }
-						*/
-						
-            _update_memory(mem_data, mem_data_ptr, bytes_left); 					
+
+            _update_memory(mem_data, mem_data_ptr, bytes_left);
             _check_buttons(mem_data);
-        }// MP3 Play Loop
-				
+        }  /* while (forever) */
+
         _check_buttons(mem_data);
-    }// Main loop
+    }  /* while (1) */
+
+    return 0; // Never reached.
 }
