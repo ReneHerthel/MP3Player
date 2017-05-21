@@ -138,7 +138,10 @@ void spi_transfer_byte(spi_t dev, unsigned char out, unsigned char *in)
     spi->DR = (char) out;
 
     /* wait until the current byte was successfully transferred */
-    while(!(spi->SR & SPI_SR_RXNE)){};
+    while(!(spi->SR & SPI_SR_RXNE))
+    {
+        /* Do nothing here. */
+    };
 
     /* read response byte to reset flags */
     val = spi->DR;
